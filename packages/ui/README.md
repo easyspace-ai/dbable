@@ -1,0 +1,102 @@
+# `@easygrid/ui`
+
+전역적으로 사용가능한 `shadcn/ui` 기반의 컴포넌트 라이브러리.
+
+## Getting Started
+
+### In `Next.js` Project
+
+```bash
+pnpm add --workspace @easygrid/ui
+```
+
+Update `tsconfig.json`.
+
+```diff
+{
+  "compilerOptions": {
+    ...
+    "paths": {
+      "~/*": ["./src/*"],
++     "@easygrid/ui/*": ["../../packages/ui/src/*"]
+    }
+  },
+  ...
+}
+```
+
+Update `next.config.ts`
+
+```diff
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
+  ...
++ transpilePackages: ['@easygrid/ui'],
+};
+
+export default nextConfig;
+```
+
+Update `src/app/globals.css`
+
+```css
+@import '@easygrid/ui/globals.css';
+```
+
+### In `React Router` Project
+
+```bash
+pnpm add --workspace @easygrid/ui
+```
+
+Update `tsconfig.json` or `tsconfig.app.json`
+
+```diff
+{
+  "compilerOptions": {
+    ...
+    "paths": {
+      "~/*": ["./src/*"],
++     "@easygrid/ui/*": ["../../packages/ui/src/*"]
+    }
+  },
+  ...
+}
+```
+
+Update `src/index.css`
+
+```css
+@import '@easygrid/ui/globals.css';
+/* ... */
+```
+
+<br />
+
+## Update `shadcn/ui` Components
+
+`shadcn/ui` 를 최신 버전으로 업데이트하는 방법
+
+```bash
+cd packages/ui
+# Shadcn UI 최신 버전 설치(덮어쓰기)
+pnpm dlx shadcn@canary add -a -o -y
+# 직접 수정한 컴포넌트는 복구
+git restore src/components/checkbox.tsx
+# 코드 포맷팅
+pnpm -w run format "packages/ui/src/**/*.*"
+```
+
+의존성 설치
+
+```bash
+pnpm install
+
+# 워크스페이스 의존성
+pnpm add --workspace -D @easygrid/eslint-config @easygrid/typescript-config
+# 기본 의존성
+pnpm add react react-dom
+# 기본 개발 의존성
+pnpm add -D @types/node @types/react @types/react-dom
+```

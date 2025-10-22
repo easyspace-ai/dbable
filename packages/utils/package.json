@@ -1,0 +1,41 @@
+{
+  "name": "@easygrid/utils",
+  "version": "0.1.9",
+  "private": true,
+  "type": "module",
+  "description": "Common utils for monorepo projects",
+  "exports": {
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "default": "./dist/*.js"
+    }
+  },
+  "files": [
+    "dist/**"
+  ],
+  "scripts": {
+    "prepare": "pnpm build",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0",
+    "test": "vitest",
+    "build": "tsup"
+  },
+  "dependencies": {
+    "date-fns": "^4.1.0",
+    "fast-glob": "^3.3.3",
+    "jose": "^6.1.0",
+    "microdiff": "^1.5.0",
+    "ts-morph": "^27.0.2"
+  },
+  "devDependencies": {
+    "@easygrid/eslint-config": "workspace:*",
+    "@easygrid/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "tsup": "^8.5.0",
+    "type-fest": "catalog:",
+    "typescript": "catalog:",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.2.4"
+  }
+}

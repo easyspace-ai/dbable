@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "new-york",
+  "tailwind": {
+    "config": "",
+    "css": "src/styles/globals.css",
+    "baseColor": "zinc",
+    "cssVariables": true
+  },
+  "rsc": true,
+  "tsx": true,
+  "aliases": {
+    "utils": "@easygrid/ui/lib/utils",
+    "components": "@easygrid/ui/components",
+    "ui": "@easygrid/ui/components",
+    "lib": "@easygrid/ui/lib",
+    "hooks": "@easygrid/ui/hooks"
+  },
+  "iconLibrary": "lucide"
+}

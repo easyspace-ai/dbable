@@ -1,0 +1,35 @@
+{
+  "name": "easygrid",
+  "version": "0.1.0",
+  "private": true,
+  "description": "EasyGrid - 现代化的网格布局和组件管理系统",
+  "repository": "https://github.com/your-username/easygrid",
+  "license": "MIT",
+  "author": "Your Name <your-email@example.com>",
+  "type": "module",
+  "scripts": {
+    "prepare": "husky",
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "check-types": "turbo run check-types",
+    "format": "prettier --write",
+    "lint": "turbo run lint",
+    "test": "turbo run test"
+  },
+  "lint-staged": {
+    "*.{js,ts,tsx,mdx}": [
+      "prettier --write './{apps,packages}/**/*.{js,jsx,ts,tsx,css,mdx}'"
+    ]
+  },
+  "devDependencies": {
+    "eslint": "catalog:",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.5",
+    "prettier": "^3.6.2",
+    "prettier-plugin-organize-imports": "^4.3.0",
+    "prettier-plugin-tailwindcss": "^0.7.1",
+    "turbo": "^2.5.8",
+    "typescript": "catalog:"
+  },
+  "packageManager": "pnpm@10.17.0"
+}
