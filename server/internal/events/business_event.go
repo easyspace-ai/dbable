@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/easyspace-ai/luckdb/server/internal/infrastructure/cache"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
@@ -86,24 +88,35 @@ type BusinessEventManager struct {
 	logger      *zap.Logger
 	redisClient *redis.Client
 	redisPrefix string
+	ctx         context.Context
+	cancel      context.CancelFunc
+	shutdown    bool
+	shutdownMux sync.RWMutex
 }
 
 // NewBusinessEventManager 创建业务事件管理器
 func NewBusinessEventManager(logger *zap.Logger) *BusinessEventManager {
+	ctx, cancel := context.WithCancel(context.Background())
 	return &BusinessEventManager{
 		subscribers: make(map[string]chan *BusinessEvent),
 		logger:      logger,
 		redisPrefix: "luckdb:events",
+		ctx:         ctx,
+		cancel:      cancel,
 	}
 }
 
 // NewBusinessEventManagerWithRedis 创建带Redis分布式广播的业务事件管理器
 func NewBusinessEventManagerWithRedis(logger *zap.Logger, redisClient *redis.Client, redisPrefix string) *BusinessEventManager {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	manager := &BusinessEventManager{
 		subscribers: make(map[string]chan *BusinessEvent),
 		logger:      logger,
 		redisClient: redisClient,
 		redisPrefix: redisPrefix,
+		ctx:         ctx,
+		cancel:      cancel,
 	}
 
 	// 启动Redis订阅监听
@@ -367,14 +380,75 @@ func (m *BusinessEventManager) startRedisSubscriber() {
 	}
 
 	channel := fmt.Sprintf("%s:broadcast", m.redisPrefix)
-	pubsub := m.redisClient.Subscribe(context.Background(), channel)
-	defer pubsub.Close()
 
+	// 使用错误抑制器包装Redis操作
+	err := cache.SuppressRedisErrors(m.logger, func() error {
+		pubsub := m.redisClient.Subscribe(m.ctx, channel)
+		defer func() {
+			// 优雅关闭订阅
+			if err := pubsub.Close(); err != nil {
+				// 忽略连接关闭错误
+				if !strings.Contains(err.Error(), "use of closed network connection") {
+					m.logger.Warn("Redis pubsub close error", zap.Error(err))
+				}
+			}
+		}()
+
+		return m.handleRedisSubscription(pubsub)
+	})
+
+	if err != nil {
+		m.logger.Error("Redis subscription failed", zap.Error(err))
+	}
+}
+
+// handleRedisSubscription 处理Redis订阅
+func (m *BusinessEventManager) handleRedisSubscription(pubsub *redis.PubSub) error {
+	channel := fmt.Sprintf("%s:broadcast", m.redisPrefix)
 	m.logger.Info("Started Redis event subscriber", zap.String("channel", channel))
 
 	for {
-		msg, err := pubsub.ReceiveMessage(context.Background())
+		// 检查关闭状态
+		m.shutdownMux.RLock()
+		if m.shutdown {
+			m.shutdownMux.RUnlock()
+			m.logger.Info("Redis event subscriber stopping due to shutdown")
+			return nil
+		}
+		m.shutdownMux.RUnlock()
+
+		select {
+		case <-m.ctx.Done():
+			m.logger.Info("Redis event subscriber stopping due to context cancellation")
+			return nil
+		default:
+		}
+
+		// 使用带超时的接收，避免长时间阻塞
+		ctx, cancel := context.WithTimeout(m.ctx, 5*time.Second)
+		msg, err := pubsub.ReceiveMessage(ctx)
+		cancel()
+
 		if err != nil {
+			// 检查是否是上下文取消错误
+			if m.ctx.Err() != nil {
+				m.logger.Info("Redis subscription stopped due to context cancellation")
+				return nil
+			}
+
+			// 检查是否是连接关闭错误
+			if strings.Contains(err.Error(), "use of closed network connection") ||
+				strings.Contains(err.Error(), "connection reset by peer") ||
+				strings.Contains(err.Error(), "broken pipe") {
+				m.logger.Info("Redis subscription stopped due to connection closure")
+				return nil
+			}
+
+			// 检查是否是超时错误
+			if strings.Contains(err.Error(), "context deadline exceeded") {
+				continue // 超时是正常的，继续循环
+			}
+
 			m.logger.Error("Redis subscription error", zap.Error(err))
 			time.Sleep(time.Second) // 避免快速重连
 			continue
@@ -396,4 +470,33 @@ func (m *BusinessEventManager) startRedisSubscriber() {
 				zap.Error(err))
 		}
 	}
+}
+
+// Shutdown 优雅关闭业务事件管理器
+func (m *BusinessEventManager) Shutdown() error {
+	m.shutdownMux.Lock()
+	if m.shutdown {
+		m.shutdownMux.Unlock()
+		return nil
+	}
+	m.shutdown = true
+	m.shutdownMux.Unlock()
+
+	// 取消上下文，停止Redis订阅
+	if m.cancel != nil {
+		m.cancel()
+	}
+
+	// 关闭所有订阅者通道
+	m.subMutex.Lock()
+	for subscriptionID, eventChan := range m.subscribers {
+		close(eventChan)
+		delete(m.subscribers, subscriptionID)
+		m.logger.Info("Business event subscription closed during shutdown",
+			zap.String("subscription_id", subscriptionID))
+	}
+	m.subMutex.Unlock()
+
+	m.logger.Info("Business event manager shutdown completed")
+	return nil
 }

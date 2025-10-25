@@ -92,13 +92,29 @@ app.onRecordDelete(function(data) {
 console.log("审计日志插件初始化完成");
 console.log("插件配置:", pluginConfig);
 
-// 导出插件信息（如果需要）
-module.exports = {
-    config: pluginConfig,
-    getAuditLogs: function() {
-        return auditLogs;
-    },
-    clearAuditLogs: function() {
-        auditLogs.length = 0;
-    }
-};
+// 导出插件信息（JSVM兼容版本）
+// 在JSVM环境中，我们使用全局变量而不是module.exports
+if (typeof global !== 'undefined') {
+    global.auditLoggerPlugin = {
+        config: pluginConfig,
+        getAuditLogs: function() {
+            return auditLogs;
+        },
+        clearAuditLogs: function() {
+            auditLogs.length = 0;
+        }
+    };
+}
+
+// 兼容性：如果存在module对象，也导出
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        config: pluginConfig,
+        getAuditLogs: function() {
+            return auditLogs;
+        },
+        clearAuditLogs: function() {
+            auditLogs.length = 0;
+        }
+    };
+}

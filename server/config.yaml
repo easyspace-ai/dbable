@@ -21,7 +21,7 @@ database:
   max_idle_conns: 25 # ✅ 优化：10 -> 25
   max_open_conns: 200 # ✅ 优化：100 -> 200
   conn_max_lifetime: '1h'
-  log_level: 'info' # 显示所有SQL查询
+  log_level: 'warn' # ✅ 优化：减少启动时的SQL查询日志，只显示警告和错误
 
 redis:
   host: 'localhost'
@@ -48,9 +48,9 @@ storage:
 logger:
   level: 'debug'
   format: 'console'
-  output_path: 'logs/app.log'
+  output_path: '/test/logs/app.log'
 
-# SQL日志配置 - 单独记录到文件，纯文本格式方便复制
+# SQL日志配置 - 优化启动性能
 sql_logger:
   enabled: true
   output_path: '/test/logs/sql.log' # SQL日志文件路径
@@ -58,6 +58,10 @@ sql_logger:
   max_backups: 5 # 保留的旧日志文件数量
   max_age: 30 # 保留的最大天数
   compress: false # 不压缩，方便查看
+  # ✅ 优化：启动时跳过元数据查询日志
+  skip_metadata_queries: true
+  # ✅ 优化：只记录慢查询（>100ms）
+  slow_query_threshold: '100ms'
 
 queue:
   redis_addr: 'localhost:6379'

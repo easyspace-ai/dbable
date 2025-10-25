@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airtable Demo - 表格管理演示</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background-color: #f8f9fa;
+        }
+        
+        .demo-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .demo-header {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .demo-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0;
+        }
+        
+        .demo-subtitle {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin: 0.25rem 0 0 0;
+        }
+        
+        .demo-content {
+            flex: 1;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1 class="demo-title">Airtable Demo</h1>
+            <p class="demo-subtitle">类似 Airtable 的表格管理界面演示</p>
+        </div>
+        <div class="demo-content" id="root"></div>
+    </div>
+    
+    <script type="module" src="./main.tsx"></script>
+</body>
+</html>

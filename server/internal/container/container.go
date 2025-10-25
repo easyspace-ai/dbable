@@ -371,25 +371,31 @@ func (c *Container) initCalculationServices() {
 func (c *Container) Close() {
 	logger.Info("正在关闭容器资源...")
 
-	// 关闭 JSVM 服务
+	// 1. 首先关闭业务事件管理器（停止Redis订阅）
+	if c.businessEventManager != nil {
+		c.businessEventManager.Shutdown()
+		logger.Info("✅ 业务事件管理器已关闭")
+	}
+
+	// 2. 关闭 JSVM 服务
 	if c.jsvmManager != nil {
 		c.jsvmManager.Shutdown()
 		logger.Info("✅ JSVM 服务已关闭")
 	}
 
-	// 关闭实时通信服务
+	// 3. 关闭实时通信服务
 	if c.realtimeManager != nil {
 		c.realtimeManager.Shutdown()
 		logger.Info("✅ 实时通信服务已关闭")
 	}
 
-	// 关闭数据库连接
+	// 4. 关闭数据库连接
 	if c.db != nil {
 		c.db.Close()
 		logger.Info("✅ 数据库连接已关闭")
 	}
 
-	// 关闭缓存连接
+	// 5. 最后关闭缓存连接
 	if c.cacheClient != nil {
 		c.cacheClient.Close()
 		logger.Info("✅ 缓存连接已关闭")
