@@ -103,3 +103,4 @@ grep "已关闭\|shutdown completed" server_output.log | tail -10
 rm -f server_output.log
 
 echo "🎉 Redis错误修复测试完成"
+

@@ -68,3 +68,4 @@ performance_monitoring:
     slow_query_threshold: '50ms'
     # 跳过元数据查询监控
     skip_metadata_monitoring: true
+
